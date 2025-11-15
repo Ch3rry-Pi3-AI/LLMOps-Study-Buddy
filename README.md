@@ -1,17 +1,18 @@
-# ⚡ **Groq LLM Client — LLMOps StudyBuddy**
+# 🧠 **Question Generator — LLMOps StudyBuddy**
 
-This branch introduces the **first LLM integration** for the **LLMOps StudyBuddy** project.
-It adds a lightweight client wrapper for the **Groq language model**, enabling the rest of the system to generate questions, explanations, and study content through a single, consistent interface.
+This branch introduces the **first high-level question-generation service** for the LLMOps StudyBuddy project.
+It connects the entire workflow: prompt templates → LLM output → Pydantic parsing → validated study questions.
 
-By centralising the LLM initialisation, the project gains:
+This service provides a unified interface for generating two structured question types:
 
-* Consistent configuration
-* Cleaner imports across modules
-* Easy future upgrades (model switching, retries, caching, etc.)
+* Multiple-choice questions (MCQs)
+* Fill-in-the-blank questions
+
+With built-in retries, logging, schema validation, and structured outputs, it forms a core intelligence layer for StudyBuddy.
 
 ## 🗂️ **Updated Project Structure**
 
-Only the **new folder and file** added in this branch are annotated:
+Only the **new folder and file** introduced in this branch are annotated below:
 
 ```text
 LLMOPS-STUDY-BUDDY/
@@ -30,59 +31,76 @@ LLMOPS-STUDY-BUDDY/
 │   ├── config/
 │   ├── models/
 │   ├── prompts/
-│   └── llm/
-│       └── groq_client.py     # ⚡ Factory function returning a configured Groq Chat model
+│   ├── llm/
+│   └── generator/
+│       └── question_generator.py     # 🧠 High-level generation service for MCQ + fill-blank questions
 └── README.md
 ```
 
 ## 🧠 **What This Branch Adds**
 
-### ⚡ `groq_client.py`
+### 🧠 `question_generator.py`
 
-This module defines a single helper function:
+This module defines the `QuestionGenerator` class, which orchestrates:
 
-`get_groq_llm()`
+* LangChain prompt templates
+* The Groq Chat model
+* Pydantic context-aware output parsing
+* Retry logic across LLM failures
+* Normalisation and validation of generated questions
+* Logging for every attempt and error
 
-It:
+It provides two primary methods:
 
-* Creates a configured **ChatGroq** client
-* Uses global configuration from `settings.py`
-* Ensures all LLM calls use the same:
+### 1. `generate_mcq(topic, difficulty)`
 
-  * API key
-  * Model name
-  * Temperature
+Produces a fully validated `MCQQuestion` object using:
 
-Centralising this logic prevents configuration drift and keeps future integrations clean and maintainable.
+* the MCQ prompt template
+* the `ChatGroq` model
+* strict Pydantic parsing
+* structural checks (4 options, correct_answer must be in options)
 
-### Key Benefits
+### 2. `generate_fill_blank(topic, difficulty)`
 
-* One reliable entry point for all model interactions
-* Simplifies pipelines, agents, and services that need LLM access
-* Makes model swapping trivial (e.g., newer Groq models or other providers)
+Produces a validated `FillBlankQuestion` object with:
+
+* the fill-blank prompt
+* Pydantic parsing
+* strict placeholder validation (`___` required)
+
+Together, these functions provide the building blocks for automated quizzes, tutoring systems, and curriculum generation.
 
 ## 🧪 **Example Usage**
 
 ```python
-from llm.groq_client import get_groq_llm
+from generator.question_generator import QuestionGenerator
 
-llm = get_groq_llm()
-response = llm.invoke("Explain the difference between precision and recall.")
-print(response)
+qg = QuestionGenerator()
+
+mcq = qg.generate_mcq("machine learning", "medium")
+print(mcq)
+
+fill = qg.generate_fill_blank("calculus", "easy")
+print(fill)
 ```
 
-This pattern allows every component of StudyBuddy to use the LLM safely and consistently.
+Each return value is a **typed Pydantic model**, not raw JSON — ready for:
+
+* display
+* storage
+* analysis
+* evaluation
+* or transformation in future RAG components
 
 ## ✅ **In Summary**
 
 This branch:
 
-* Adds a dedicated **`llm/`** folder for all language-model tooling
-* Introduces a central **Groq client factory**
-* Ensures consistent model configuration across the entire project
-* Lays the groundwork for future components:
+* Adds the **`generator/`** folder to the project
+* Introduces the high-level **QuestionGenerator service**
+* Provides robust retry, parsing, and logging for LLM outputs
+* Validates question structure using strict Pydantic schemas
+* Creates a unified API for generating educational content
 
-  * question-generation pipelines
-  * tutoring agents
-  * retrieval-augmented reasoning
-  * LLM orchestration tools
+This forms the **core engine** that later components — pipelines, agents, study planners, and evaluators — will build upon.
