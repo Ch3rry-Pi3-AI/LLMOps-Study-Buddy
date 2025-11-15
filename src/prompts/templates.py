@@ -7,22 +7,29 @@ LLMOps StudyBuddy project.
 This module defines LangChain `PromptTemplate` objects for creating
 multiple-choice questions (MCQs) and fill-in-the-blank questions. Each
 template instructs the LLM to return strictly formatted JSON compatible
-with the project's Pydantic schemas.
+with the project's Pydantic schemas, while avoiding overused examples.
 """
 
 # --------------------------------------------------------------
 # Imports
 # --------------------------------------------------------------
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 
 # --------------------------------------------------------------
 # Multiple-Choice Question Prompt Template
 # --------------------------------------------------------------
-# Template for generating an MCQ with structured JSON output
 mcq_prompt_template: PromptTemplate = PromptTemplate(
     template=(
-        "Generate a {difficulty} multiple-choice question about {topic}.\n\n"
+        "You are helping to build a quiz. Generate a {difficulty} multiple-choice "
+        "question about the topic: {topic}.\n\n"
+        "Requirements:\n"
+        "- The question must be about a specific fact, event, person, idea or concept.\n"
+        "- It must be different from typical textbook cliches.\n"
+        "- Do NOT ask about Machu Picchu, the Incas, the Terracotta Army, "
+        "the Qin dynasty, or other overused examples unless they are explicitly "
+        "mentioned in the topic text.\n"
+        "- Make this question feel distinct and interesting.\n\n"
         "Return ONLY a JSON object with these exact fields:\n"
         "- 'question': A clear, specific question\n"
         "- 'options': An array of exactly 4 possible answers\n"
@@ -42,10 +49,17 @@ mcq_prompt_template: PromptTemplate = PromptTemplate(
 # --------------------------------------------------------------
 # Fill-in-the-Blank Question Prompt Template
 # --------------------------------------------------------------
-# Template for generating a fill-in-the-blank question with structured JSON
 fill_blank_prompt_template: PromptTemplate = PromptTemplate(
     template=(
-        "Generate a {difficulty} fill-in-the-blank question about {topic}.\n\n"
+        "You are helping to build a quiz. Generate a {difficulty} fill-in-the-blank "
+        "question about the topic: {topic}.\n\n"
+        "Requirements:\n"
+        "- The sentence should test a specific historical fact, person, date or concept.\n"
+        "- It must be different from typical textbook cliches.\n"
+        "- Do NOT ask about Machu Picchu, the Incas, the Terracotta Army, "
+        "the Qin dynasty, or other overused examples unless they are explicitly "
+        "mentioned in the topic text.\n"
+        "- Make this question feel distinct and interesting.\n\n"
         "Return ONLY a JSON object with these exact fields:\n"
         "- 'question': A sentence with '_____' marking where the blank should be\n"
         "- 'answer': The correct word or phrase that belongs in the blank\n\n"
