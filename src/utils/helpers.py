@@ -84,7 +84,13 @@ class QuizManager:
         num_questions: int,
     ) -> bool:
         """
-        Generate a batch of questions using the provided QuestionGenerator.
+        Generate a batch of unique questions using the provided QuestionGenerator.
+
+        This method:
+        - Resets the current quiz state
+        - Calls the LLM-backed generator repeatedly
+        - Rejects duplicate question texts and retries a few times
+        - Populates `self.questions` with only unique questions
 
         Parameters
         ----------
@@ -102,48 +108,94 @@ class QuizManager:
         Returns
         -------
         bool
-            True if all questions are generated successfully, False otherwise.
+            True if at least one question is generated successfully.
+            False if generation fails entirely.
         """
         # Reset internal quiz state for a new quiz
         self.questions = []
         self.user_answers = []
         self.results = []
 
+        # Track seen question texts to avoid duplicates (case-insensitive)
+        seen_questions: set[str] = set()
+
+        # Limit how many times we will retry per requested question
+        max_attempts_per_question = 5
+
         try:
             for _ in range(num_questions):
-                if question_type == "Multiple Choice":
-                    # Generate a multiple-choice question
-                    question = generator.generate_mcq(topic, difficulty.lower())
+                attempts = 0
+                unique_question_added = False
 
-                    self.questions.append(
-                        {
-                            "type": "MCQ",
-                            "question": question.question,
-                            "options": question.options,
-                            "correct_answer": question.correct_answer,
-                        }
-                    )
-                else:
-                    # Generate a fill-in-the-blank question
-                    question = generator.generate_fill_blank(
-                        topic,
-                        difficulty.lower(),
-                    )
+                while attempts < max_attempts_per_question and not unique_question_added:
+                    attempts += 1
 
-                    self.questions.append(
-                        {
-                            "type": "Fill in the blank",
-                            "question": question.question,
-                            "correct_answer": question.answer,
-                        }
+                    if question_type == "Multiple Choice":
+                        # Generate a multiple-choice question
+                        question = generator.generate_mcq(topic, difficulty.lower())
+
+                        question_text = question.question.strip().lower()
+
+                        # Skip duplicates
+                        if question_text in seen_questions:
+                            continue
+
+                        # Accept this question
+                        seen_questions.add(question_text)
+                        self.questions.append(
+                            {
+                                "type": "MCQ",
+                                "question": question.question,
+                                "options": question.options,
+                                "correct_answer": question.correct_answer,
+                            }
+                        )
+                        unique_question_added = True
+
+                    else:
+                        # Generate a fill-in-the-blank question
+                        question = generator.generate_fill_blank(
+                            topic,
+                            difficulty.lower(),
+                        )
+
+                        question_text = question.question.strip().lower()
+
+                        # Skip duplicates
+                        if question_text in seen_questions:
+                            continue
+
+                        # Accept this question
+                        seen_questions.add(question_text)
+                        self.questions.append(
+                            {
+                                "type": "Fill in the blank",
+                                "question": question.question,
+                                "correct_answer": question.answer,
+                            }
+                        )
+                        unique_question_added = True
+
+                # If we could not get a unique question after several attempts,
+                # stop trying to generate more for this run.
+                if not unique_question_added:
+                    st.warning(
+                        "Could not generate enough unique questions for this topic. "
+                        "The quiz will contain fewer questions than requested."
                     )
+                    break
 
         except Exception as exc:
-            # Inform the user if generation fails
             st.error(f"Error generating questions: {exc}")
             return False
 
+        # Return True if we managed to generate at least one question
+        if not self.questions:
+            st.error("No questions were generated.")
+            return False
+
         return True
+
 
     def attempt_quiz(self) -> None:
         """
@@ -151,7 +203,13 @@ class QuizManager:
 
         This method uses Streamlit widgets (radio buttons and text inputs)
         to present each question and collect the user's response.
+
+        It rebuilds `self.user_answers` on every run so that Streamlit's
+        rerun behaviour does not accumulate stale or duplicate answers.
         """
+        # Always rebuild answers from the current UI state
+        self.user_answers = []
+
         for i, q in enumerate(self.questions):
             # Display question text
             st.markdown(f"**Question {i + 1}: {q['question']}**")

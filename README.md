@@ -1,13 +1,35 @@
-# 🧰 **Utilities & Quiz Management — LLMOps StudyBuddy**
+# 🎨 **Streamlit Application — LLMOps StudyBuddy**
 
-This branch introduces the **utils layer** for the LLMOps StudyBuddy project.
-It provides helper functions and the full **QuizManager**, which together enable interactive quiz workflows inside the Streamlit application.
+This branch introduces the **interactive user interface** for the LLMOps StudyBuddy project.
+The new `app.py` file provides a full Streamlit-powered quiz experience that allows users to:
 
-These utilities connect the question-generation engine to the user-facing quiz interface, handling quiz state, answer collection, scoring, result formatting, and saving outputs to CSV.
+* Select a topic, difficulty, and question type
+* Generate multiple-choice or fill-in-the-blank questions
+* Attempt the quiz interactively
+* View detailed results
+* Save and download a CSV of completed quiz attempts
+
+The Streamlit interface sits on top of the existing LLM-powered generation pipeline and delivers a clean, responsive, and user-friendly quiz workflow.
+
+## 🎥 **Application Demonstrations**
+
+Below are two demonstrations of the Streamlit StudyBuddy app in action.
+
+### **Multiple-Choice Question Demo**
+
+<p align="center">
+  <img src="img/streamlit/streamlit_app1.gif" alt="StudyBuddy Multiple Choice Demo" width="100%">
+</p>
+
+### **Fill-in-the-Blank Question Demo**
+
+<p align="center">
+  <img src="img/streamlit/streamlit_app2.gif" alt="StudyBuddy Fill in the Blank Demo" width="100%">
+</p>
 
 ## 🗂️ **Updated Project Structure**
 
-Only the **new folder and file** introduced in this branch are annotated below:
+Only the **new file** added in this branch is annotated below:
 
 ```text
 LLMOPS-STUDY-BUDDY/
@@ -15,6 +37,11 @@ LLMOPS-STUDY-BUDDY/
 ├── .env
 ├── .gitignore
 ├── .python-version
+├── app.py                      # 🎨 Streamlit application for StudyBuddy
+├── img/
+│   └── streamlit/
+│       ├── streamlit_app1.gif
+│       └── streamlit_app2.gif
 ├── llmops_study_buddy.egg-info/
 ├── manifests/
 ├── pyproject.toml
@@ -29,85 +56,44 @@ LLMOPS-STUDY-BUDDY/
 │   ├── llm/
 │   ├── generator/
 │   └── utils/
-│       └── helpers.py        # 🧰 Streamlit helpers + QuizManager implementation
 └── README.md
 ```
 
-## 🧠 **What This Branch Adds**
+## 🚀 **What This Branch Adds**
 
-### 🧰 `helpers.py`
+### 🎨 `app.py`
 
-This module provides two key additions:
+The new `app.py` file implements the complete Streamlit interface for StudyBuddy.
 
+It includes:
 
+* Sidebar configuration for question type, topic, difficulty, and number of questions
+* A clean quiz generation workflow
+* Interactive question display with radio buttons or text inputs
+* A results page with correctness feedback and scoring
+* CSV export functionality
+* Session-state-driven reruns for smooth user experience
 
-### 1. 🔄 `rerun()`
+This marks the first end-user–facing interface layer of the StudyBuddy system.
 
-A small Streamlit helper that toggles a session-state flag to force the UI to refresh.
-Useful for interactive controls, resetting forms, and managing dynamic quiz behaviour.
+## ▶️ **How to Run the Streamlit App**
 
+From the project root, execute:
 
-
-### 2. 🧠 `QuizManager`
-
-The central quiz-handling class responsible for:
-
-#### **Question Generation**
-
-* Uses the `QuestionGenerator` to create MCQs or fill-in-the-blank questions
-* Accepts topic, difficulty, and number of questions
-* Stores questions in a serialisable JSON-friendly format
-
-#### **Quiz Interaction**
-
-* Renders questions via Streamlit widgets:
-
-  * `st.radio` for MCQs
-  * `st.text_input` for fill-in-the-blank
-* Collects answers in the correct order
-
-#### **Evaluation**
-
-* Compares user answers to correct answers
-* Normalises casing/whitespace for fill blanks
-* Records per-question performance
-
-#### **Results Export**
-
-* Produces a pandas DataFrame of results
-* Saves timestamped CSV files to `results/`
-* Displays success or error messages in the Streamlit UI
-
-Taken together, `QuizManager` forms the **full quiz workflow** that bridges LLM-generated questions and the StudyBuddy UI.
-
-## 🧪 **Example Usage**
-
-```python
-from utils.helpers import QuizManager
-from generator.question_generator import QuestionGenerator
-
-quiz = QuizManager()
-qg = QuestionGenerator()
-
-if quiz.generate_questions(qg, "statistics", "Multiple Choice", "medium", 5):
-    quiz.attempt_quiz()
-    quiz.evaluate_quiz()
-    df = quiz.generate_result_dataframe()
+```bash
+streamlit run app.py
 ```
 
-The returned DataFrame and CSV outputs make it easy to store, analyse, or review completed quizzes.
+This launches the interactive StudyBuddy interface in your browser.
 
 ## ✅ **In Summary**
 
 This branch:
 
-* Adds the **`utils/`** folder to the project
-* Introduces the **QuizManager**, the interactive quiz engine of StudyBuddy
-* Adds a simple `rerun()` helper for Streamlit app control
-* Enables:
+* Adds the interactive **Streamlit application layer**
+* Introduces the root-level `app.py` file
+* Provides live demos via full-width GIF animations
+* Connects the LLM generation pipeline with a polished UI
+* Enables full quiz creation, attempt, evaluation, and export
 
-  * question generation → interaction → evaluation → export
-  * smooth integration with the existing `QuestionGenerator`
-  * future extensions such as review sessions, scoring analytics, and personalised feedback
-
-This layer is essential for turning raw LLM output into a usable, interactive study experience.
+Your StudyBuddy system now has a complete user interface ready for demonstrations, testing, and future enhancement.
