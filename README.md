@@ -1,14 +1,9 @@
-# 🧠 **Question Generator — LLMOps StudyBuddy**
+# 🧰 **Utilities & Quiz Management — LLMOps StudyBuddy**
 
-This branch introduces the **first high-level question-generation service** for the LLMOps StudyBuddy project.
-It connects the entire workflow: prompt templates → LLM output → Pydantic parsing → validated study questions.
+This branch introduces the **utils layer** for the LLMOps StudyBuddy project.
+It provides helper functions and the full **QuizManager**, which together enable interactive quiz workflows inside the Streamlit application.
 
-This service provides a unified interface for generating two structured question types:
-
-* Multiple-choice questions (MCQs)
-* Fill-in-the-blank questions
-
-With built-in retries, logging, schema validation, and structured outputs, it forms a core intelligence layer for StudyBuddy.
+These utilities connect the question-generation engine to the user-facing quiz interface, handling quiz state, answer collection, scoring, result formatting, and saving outputs to CSV.
 
 ## 🗂️ **Updated Project Structure**
 
@@ -32,75 +27,87 @@ LLMOPS-STUDY-BUDDY/
 │   ├── models/
 │   ├── prompts/
 │   ├── llm/
-│   └── generator/
-│       └── question_generator.py     # 🧠 High-level generation service for MCQ + fill-blank questions
+│   ├── generator/
+│   └── utils/
+│       └── helpers.py        # 🧰 Streamlit helpers + QuizManager implementation
 └── README.md
 ```
 
 ## 🧠 **What This Branch Adds**
 
-### 🧠 `question_generator.py`
+### 🧰 `helpers.py`
 
-This module defines the `QuestionGenerator` class, which orchestrates:
+This module provides two key additions:
 
-* LangChain prompt templates
-* The Groq Chat model
-* Pydantic context-aware output parsing
-* Retry logic across LLM failures
-* Normalisation and validation of generated questions
-* Logging for every attempt and error
 
-It provides two primary methods:
 
-### 1. `generate_mcq(topic, difficulty)`
+### 1. 🔄 `rerun()`
 
-Produces a fully validated `MCQQuestion` object using:
+A small Streamlit helper that toggles a session-state flag to force the UI to refresh.
+Useful for interactive controls, resetting forms, and managing dynamic quiz behaviour.
 
-* the MCQ prompt template
-* the `ChatGroq` model
-* strict Pydantic parsing
-* structural checks (4 options, correct_answer must be in options)
 
-### 2. `generate_fill_blank(topic, difficulty)`
 
-Produces a validated `FillBlankQuestion` object with:
+### 2. 🧠 `QuizManager`
 
-* the fill-blank prompt
-* Pydantic parsing
-* strict placeholder validation (`___` required)
+The central quiz-handling class responsible for:
 
-Together, these functions provide the building blocks for automated quizzes, tutoring systems, and curriculum generation.
+#### **Question Generation**
+
+* Uses the `QuestionGenerator` to create MCQs or fill-in-the-blank questions
+* Accepts topic, difficulty, and number of questions
+* Stores questions in a serialisable JSON-friendly format
+
+#### **Quiz Interaction**
+
+* Renders questions via Streamlit widgets:
+
+  * `st.radio` for MCQs
+  * `st.text_input` for fill-in-the-blank
+* Collects answers in the correct order
+
+#### **Evaluation**
+
+* Compares user answers to correct answers
+* Normalises casing/whitespace for fill blanks
+* Records per-question performance
+
+#### **Results Export**
+
+* Produces a pandas DataFrame of results
+* Saves timestamped CSV files to `results/`
+* Displays success or error messages in the Streamlit UI
+
+Taken together, `QuizManager` forms the **full quiz workflow** that bridges LLM-generated questions and the StudyBuddy UI.
 
 ## 🧪 **Example Usage**
 
 ```python
+from utils.helpers import QuizManager
 from generator.question_generator import QuestionGenerator
 
+quiz = QuizManager()
 qg = QuestionGenerator()
 
-mcq = qg.generate_mcq("machine learning", "medium")
-print(mcq)
-
-fill = qg.generate_fill_blank("calculus", "easy")
-print(fill)
+if quiz.generate_questions(qg, "statistics", "Multiple Choice", "medium", 5):
+    quiz.attempt_quiz()
+    quiz.evaluate_quiz()
+    df = quiz.generate_result_dataframe()
 ```
 
-Each return value is a **typed Pydantic model**, not raw JSON — ready for:
-
-* display
-* storage
-* analysis
-* evaluation
-* or transformation in future RAG components
+The returned DataFrame and CSV outputs make it easy to store, analyse, or review completed quizzes.
 
 ## ✅ **In Summary**
 
 This branch:
 
-* Adds the **`generator/`** folder to the project
-* Introduces the high-level **QuestionGenerator service**
-* Provides robust retry, parsing, and logging for LLM outputs
-* Validates question structure using strict Pydantic schemas
-* Creates a unified API for generating educational content
+* Adds the **`utils/`** folder to the project
+* Introduces the **QuizManager**, the interactive quiz engine of StudyBuddy
+* Adds a simple `rerun()` helper for Streamlit app control
+* Enables:
 
-This forms the **core engine** that later components — pipelines, agents, study planners, and evaluators — will build upon.
+  * question generation → interaction → evaluation → export
+  * smooth integration with the existing `QuestionGenerator`
+  * future extensions such as review sessions, scoring analytics, and personalised feedback
+
+This layer is essential for turning raw LLM output into a usable, interactive study experience.

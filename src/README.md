@@ -1,8 +1,9 @@
 # `src/` README — Core Source Code Structure
 
 The `src/` directory contains the **primary source code** for the LLMOps StudyBuddy project.
-It includes the foundational modules responsible for configuration, logging, error handling, typed Pydantic schemas, LLM prompt templates, the Groq LLM client, and now the high-level question-generation service.
-As the project evolves, this directory will expand to include pipelines, tutoring agents, retrieval workflows, orchestration layers, and evaluation modules.
+It includes the foundational modules for configuration, logging, reliability utilities, typed Pydantic schemas, prompt templates, the Groq LLM client, the question-generation engine, and now utility helpers used by the Streamlit UI and quiz logic.
+
+As the project expands, this directory will grow to include pipelines, tutoring agents, retrieval workflows, orchestration layers, and evaluation modules.
 
 At this stage, the `src/` directory includes:
 
@@ -12,6 +13,7 @@ At this stage, the `src/` directory includes:
 * `prompts/` — LangChain prompt templates for question generation
 * `llm/` — Groq client wrapper for executing model calls
 * `generator/` — high-level service for generating structured study questions
+* `utils/` — helpers for Streamlit UI and quiz management
 
 ## 📁 Folder Overview
 
@@ -22,13 +24,13 @@ src/
 ├─ models/       # Typed data schemas for study questions
 ├─ prompts/      # Prompt templates for LLM-driven question generation
 ├─ llm/          # Groq language model client and future LLM utilities
-└─ generator/    # High-level question generation service
+├─ generator/    # High-level question generation service
+└─ utils/        # Streamlit helpers and quiz management tools
 ```
 
 # 📦 `common/` — Shared Reliability Utilities
 
-The `common/` folder provides the core modules that ensure consistent and predictable system behaviour.
-Its reusable utilities support robust error handling and reliable logging across the entire project.
+The `common/` folder provides low-level utilities that ensure consistent, predictable system behaviour.
 
 ### Contains
 
@@ -42,16 +44,16 @@ src/common/
 ### Functionality
 
 * **`custom_exception.py`**
-  Defines a `CustomException` enriched with filename, line number, and traceback.
+  Provides a `CustomException` including filename, line number, and traceback context.
 
 * **`logger.py`**
-  Implements a timestamped, daily-rotating logging system for structured observability.
+  Implements structured, timestamped, daily-rotating logs for consistent observability.
 
-These utilities underpin debugging, monitoring, and consistency across the StudyBuddy codebase.
+These utilities underpin debugging and monitoring throughout the StudyBuddy codebase.
 
 # ⚙️ `config/` — Global Configuration Layer
 
-The `config/` directory contains centralised configuration loaded from environment variables.
+The `config/` directory centralises all configuration and environment-driven variables.
 
 ### Contains
 
@@ -63,112 +65,119 @@ src/config/
 
 ### Functionality
 
-* Loads environment variables using `dotenv`.
-
-* Provides a strongly typed `Settings` class defining key parameters such as:
+* Loads environment variables via `dotenv`.
+* Defines key configuration via a typed `Settings` class:
 
   * `GROQ_API_KEY`
   * `MODEL_NAME`
   * `TEMPERATURE`
   * `MAX_RETRIES`
-
-* Exposes a global `settings` object for easy import across modules.
+* Exposes a global `settings` instance.
 
 # 🧠 `models/` — Typed Question Schemas
 
-The `models/` directory defines Pydantic models used for validated question structures.
+This directory defines Pydantic models used throughout StudyBuddy for structured, validated question data.
 
 ### Contains
 
 ```text
 src/models/
 ├─ __init__.py
-└─ question_schemas.py     # MCQ and fill-in-the-blank Pydantic models
+└─ question_schemas.py     # MCQ and fill-in-the-blank schemas
 ```
 
 ### Functionality
 
-* **`MCQQuestion`**
-  Structured object with validation for multiple-choice questions.
+* **`MCQQuestion`** — A structured, validated multiple-choice question model
+* **`FillBlankQuestion`** — A validated fill-in-the-blank question model
 
-* **`FillBlankQuestion`**
-  Structured representation of fill-in-the-blank questions with placeholder enforcement.
-
-These schemas ensure all generated questions follow a strict, predictable structure.
+These schemas ensure all generated questions follow strict, predictable rules.
 
 # 🎨 `prompts/` — LLM Prompt Templates
 
-The `prompts/` directory contains reusable LangChain prompt templates for generating question JSON.
+This directory defines the reusable LangChain template objects used for question generation.
 
 ### Contains
 
 ```text
 src/prompts/
 ├─ __init__.py
-└─ templates.py           # MCQ + fill-in-the-blank prompt templates
+└─ templates.py            # MCQ + fill-in-the-blank templates
 ```
 
 ### Functionality
 
-* Enforces strict JSON output format.
-* Ensures compatibility with Pydantic schemas.
-* Provides reusable patterns for question-generation workflows.
+* Produces strict JSON output expected by the Pydantic schemas
+* Provides reusable patterns for generating educational content
 
 # ⚡ `llm/` — Groq Language Model Client
 
-The `llm/` directory contains the Groq client logic that initialises and configures the ChatGroq model.
+This folder contains the Groq client logic used to initialise the model.
 
 ### Contains
 
 ```text
 src/llm/
 ├─ __init__.py
-└─ groq_client.py         # Factory function returning a configured Groq Chat model
+└─ groq_client.py          # Factory function returning a configured Groq Chat model
 ```
 
 ### Functionality
 
-* Provides `get_groq_llm()` for initialising the Groq LLM
-* Uses settings defined in `settings.py`
-* Ensures consistent behaviour across all modules that invoke the LLM
+* Provides a consistent entry point for creating a Groq Chat model
+* Ensures all LLM calls use centralised configuration from `settings.py`
 
 # 🧪 `generator/` — Question Generation Service
 
-The `generator/` directory contains the service responsible for orchestrating prompt templates, LLM calls, retries, and schema parsing to produce validated study questions.
+This directory contains the high-level service that ties prompts, the LLM, and Pydantic models together.
 
 ### Contains
 
 ```text
 src/generator/
 ├─ __init__.py
-└─ question_generator.py     # High-level generator for MCQ + fill-blank questions
+└─ question_generator.py     # MCQ + fill-blank generation with retries and validation
 ```
 
 ### Functionality
 
 * Integrates:
 
-  * Groq client
+  * Groq model
   * Prompt templates
-  * Pydantic schemas
+  * Pydantic output parsers
   * Retry logic
   * Structured logging
-
 * Provides:
 
   * `generate_mcq(topic, difficulty)`
   * `generate_fill_blank(topic, difficulty)`
 
-This module acts as the core engine for producing consistent and validated question objects.
+# 🧰 `utils/` — Streamlit Helpers & Quiz Management
+
+The `utils/` directory contains lightweight utility tools used by the Streamlit interface and quiz workflow.
+
+### Contains
+
+```text
+src/utils/
+├─ __init__.py
+└─ helpers.py          # QuizManager + Streamlit rerun helper
+```
+
+### Functionality
+
+* `rerun()` — toggles Streamlit session state to refresh UI
+* `QuizManager` — generates quizzes, collects answers, evaluates correctness, and exports results
+
+This folder supports the front-end experience and user interaction flow.
 
 # ✅ Summary
 
-* `src/` is the central source directory for StudyBuddy.
-* `common/` provides stable error handling and logging.
-* `config/` manages global configuration and environment variables.
-* `models/` defines validated data structures for questions.
-* `prompts/` contains structured templates for LLM-based question generation.
-* `llm/` encapsulates the Groq LLM client.
-* `generator/` provides the unified service for generating structured questions.
+* `src/` now contains configuration, reliability, schema, prompt, LLM, generation, and utility modules.
+* `common/` and `config/` provide system stability and consistent configuration.
+* `models/`, `prompts/`, and `generator/` form the core question-generation pipeline.
+* `llm/` abstracts model access through a unified Groq client.
+* `utils/` adds helpers and quiz management for the user-facing interface.
 
-The codebase is now ready to grow into pipelines, tutoring agents, retrieval systems, and advanced evaluation workflows.
+The structure is now ready for expansion into pipelines, tutoring agents, RAG systems, and evaluation workflows.
