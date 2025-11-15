@@ -1,12 +1,13 @@
-# 🎨 **Prompt Templates — LLMOps StudyBuddy**
+# ⚡ **Groq LLM Client — LLMOps StudyBuddy**
 
-This branch introduces the **first prompt templates** for the **LLMOps StudyBuddy** project.
-It adds structured **LangChain `PromptTemplate` objects** used to generate:
+This branch introduces the **first LLM integration** for the **LLMOps StudyBuddy** project.
+It adds a lightweight client wrapper for the **Groq language model**, enabling the rest of the system to generate questions, explanations, and study content through a single, consistent interface.
 
-* Multiple-choice questions (MCQs)
-* Fill-in-the-blank questions
+By centralising the LLM initialisation, the project gains:
 
-These templates instruct the LLM to return **strict JSON output** compatible with the project’s Pydantic question schemas.
+* Consistent configuration
+* Cleaner imports across modules
+* Easy future upgrades (model switching, retries, caching, etc.)
 
 ## 🗂️ **Updated Project Structure**
 
@@ -28,51 +29,60 @@ LLMOPS-STUDY-BUDDY/
 │   ├── common/
 │   ├── config/
 │   ├── models/
-│   └── prompts/
-│       └── templates.py    # 🎨 Prompt templates for MCQ + fill-in-the-blank generation
+│   ├── prompts/
+│   └── llm/
+│       └── groq_client.py     # ⚡ Factory function returning a configured Groq Chat model
 └── README.md
 ```
 
 ## 🧠 **What This Branch Adds**
 
-### 🎨 `templates.py`
+### ⚡ `groq_client.py`
 
-This module defines two reusable `PromptTemplate` objects:
+This module defines a single helper function:
 
-* `mcq_prompt_template`
+`get_groq_llm()`
 
-  * Generates a structured MCQ about a given topic and difficulty
-  * Returns JSON with: `"question"`, `"options"`, `"correct_answer"`
-  * Ensures exactly 4 options
-  * Fully aligned with the `MCQQuestion` Pydantic schema
+It:
 
-* `fill_blank_prompt_template`
+* Creates a configured **ChatGroq** client
+* Uses global configuration from `settings.py`
+* Ensures all LLM calls use the same:
 
-  * Generates a fill-in-the-blank question containing `"_____"`
-  * Returns JSON with: `"question"` and `"answer"`
-  * Compatible with the `FillBlankQuestion` schema
+  * API key
+  * Model name
+  * Temperature
 
-Both templates enforce **strict formatting**, enabling reliable downstream validation and processing.
+Centralising this logic prevents configuration drift and keeps future integrations clean and maintainable.
+
+### Key Benefits
+
+* One reliable entry point for all model interactions
+* Simplifies pipelines, agents, and services that need LLM access
+* Makes model swapping trivial (e.g., newer Groq models or other providers)
 
 ## 🧪 **Example Usage**
 
 ```python
-from prompts.templates import mcq_prompt_template, fill_blank_prompt_template
+from llm.groq_client import get_groq_llm
 
-prompt = mcq_prompt_template.format(topic="machine learning", difficulty="medium")
-print(prompt)
-
-prompt2 = fill_blank_prompt_template.format(topic="calculus", difficulty="easy")
-print(prompt2)
+llm = get_groq_llm()
+response = llm.invoke("Explain the difference between precision and recall.")
+print(response)
 ```
 
-These templates can be passed directly into an LLM chain or wrapped by a higher-level service.
+This pattern allows every component of StudyBuddy to use the LLM safely and consistently.
 
 ## ✅ **In Summary**
 
 This branch:
 
-* Adds a dedicated **`prompts/`** folder
-* Provides **structured LangChain prompt templates** for MCQ and fill-blank generation
-* Ensures all question generation follows a **strict JSON schema**
-* Builds the foundation for future components such as LLM pipelines, tutoring agents, and evaluation modules
+* Adds a dedicated **`llm/`** folder for all language-model tooling
+* Introduces a central **Groq client factory**
+* Ensures consistent model configuration across the entire project
+* Lays the groundwork for future components:
+
+  * question-generation pipelines
+  * tutoring agents
+  * retrieval-augmented reasoning
+  * LLM orchestration tools
