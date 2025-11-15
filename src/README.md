@@ -1,16 +1,17 @@
 # `src/` README — Core Source Code Structure
 
 The `src/` directory contains the **primary source code** for the LLMOps StudyBuddy project.
-It includes the foundational modules responsible for configuration, logging, error handling, and now the structured Pydantic schemas used throughout the system.
-As the project expands, this directory will grow to include pipelines, agent logic, LLM services, and workflow orchestration.
+It includes the foundational modules responsible for configuration, logging, error handling, structured Pydantic schemas, and now prompt templates for question generation.
+As the project grows, this directory will expand to include pipelines, agent logic, LLM services, retrieval workflows, and orchestration layers.
 
 At this stage, the `src/` directory includes:
 
 * `common/` — shared reliability utilities
 * `config/` — global configuration and environment loading
 * `models/` — Pydantic schemas for validated study-question structures
+* `prompts/` — LangChain prompt templates for generating structured questions
 
-Future folders (pipelines, agents, retrieval modules, dataset loaders, evaluators) will be added as development continues.
+Future modules (pipelines, agents, retrieval systems, evaluators, data loaders) will be added as development continues.
 
 ## 📁 Folder Overview
 
@@ -18,13 +19,14 @@ Future folders (pipelines, agents, retrieval modules, dataset loaders, evaluator
 src/
 ├─ common/      # Core utilities for reliability (exceptions, logging)
 ├─ config/      # Global project configuration (environment + settings)
-└─ models/      # Typed data schemas for study questions and future objects
+├─ models/      # Typed data schemas for study questions and future objects
+└─ prompts/     # Prompt templates for LLM-driven question generation
 ```
 
 # 📦 `common/` — Shared Reliability Utilities
 
 The `common/` folder provides the foundational tools required for stable system behaviour.
-It includes reusable modules for consistent debugging, exception handling, and logging.
+Its reusable modules support consistent exception handling and logging across all parts of the project.
 
 ### Contains
 
@@ -38,17 +40,16 @@ src/common/
 ### Functionality
 
 * **`custom_exception.py`**
-  Defines a `CustomException` with enhanced debugging context such as file name, line, and traceback.
+  Implements a detailed `CustomException` that enriches errors with file name, line number, and traceback context.
 
 * **`logger.py`**
-  Provides a unified logging setup that writes timestamped logs to daily rotating files.
+  Provides a unified daily-rotating logging system with timestamped entries.
 
-These modules ensure reliability and consistency across all StudyBuddy components.
+These utilities establish consistent error-reporting and observability across all StudyBuddy components.
 
 # ⚙️ `config/` — Global Configuration Layer
 
-The `config/` directory manages project-wide settings, environment variables, and global model parameters.
-It keeps sensitive credentials out of the codebase and exposes structured configuration through a `Settings` class.
+The `config/` directory manages project-wide configuration, keeps sensitive values externalised, and defines all environment-driven parameters.
 
 ### Contains
 
@@ -60,16 +61,16 @@ src/config/
 
 ### Functionality
 
-* Loads environment variables using `dotenv`.
+* Loads environment variables via `dotenv`.
 
-* Exposes a strongly typed `Settings` class that defines:
+* Exposes a strongly typed `Settings` class containing:
 
   * `GROQ_API_KEY`
   * `MODEL_NAME`
   * `TEMPERATURE`
   * `MAX_RETRIES`
 
-* Provides a global `settings` instance for easy import across modules.
+* Provides a global `settings` instance that any module can import.
 
 ### Example
 
@@ -81,7 +82,7 @@ print(settings.MODEL_NAME)
 
 # 🧠 `models/` — Typed Question Schemas
 
-The `models/` folder defines **Pydantic models** that structure and validate question formats used in StudyBuddy’s learning and evaluation workflows.
+The `models/` directory defines **Pydantic models** used to structure and validate question data across the system.
 
 ### Contains
 
@@ -94,23 +95,45 @@ src/models/
 ### Functionality
 
 * **`MCQQuestion`**
-  Represents a multiple-choice question with options, a correct answer, and question text normalisation.
+  Represents a structured multiple-choice question with options, correct-answer validation, and question normalisation.
 
 * **`FillBlankQuestion`**
-  Represents a fill-in-the-blank format with an expected answer and normalised text field.
+  Represents a fill-in-the-blank question with a placeholder and expected answer field.
 
-These schemas provide a reliable, type-safe structure for future components such as:
+These schemas support future components such as:
 
 * Question generators
-* Evaluation pipelines
-* Interactive study sessions
+* Study workloads and interactive sessions
+* Evaluation or grading pipelines
 * RAG-based question transformation
-* Dataset ingestion and validation
+* Dataset ingestion and parsing
+
+# 🎨 `prompts/` — LLM Prompt Templates
+
+The `prompts/` directory contains reusable LangChain `PromptTemplate` objects used to instruct the LLM in generating structured JSON output compatible with the Pydantic schemas.
+
+### Contains
+
+```text
+src/prompts/
+├─ __init__.py
+└─ templates.py      # Prompt templates for MCQ + fill-in-the-blank questions
+```
+
+### Functionality
+
+* Provides templates that enforce strict JSON response structure
+* Ensures compatibility with `MCQQuestion` and `FillBlankQuestion` schemas
+* Defines reusable patterns for question-generation workflows
+
+These templates are central to generating high-quality, model-consistent educational content.
 
 # ✅ Summary
 
-* `src/` contains the backbone of the StudyBuddy application.
-* `common/` provides consistent error handling and logging utilities.
-* `config/` centralises environment and model settings.
-* `models/` introduces validated, structured data schemas for question handling.
-* The directory is now ready to expand into pipelines, LLM modules, agents, and workflow orchestration layers.
+* `src/` contains the backbone infrastructure for the StudyBuddy application.
+* `common/` provides reliable error handling and logging mechanisms.
+* `config/` centralises environment settings and global configuration.
+* `models/` defines validated data structures for question types.
+* `prompts/` contains question-generation templates for use with LLMs.
+
+The directory is now prepared for upcoming components such as pipelines, LLM orchestration, agent logic, and RAG-based study assistance.

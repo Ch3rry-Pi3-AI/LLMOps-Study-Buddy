@@ -1,16 +1,16 @@
-# ❓ **Question Schemas — LLMOps StudyBuddy**
+# 🎨 **Prompt Templates — LLMOps StudyBuddy**
 
-This branch introduces the **first data models** for the **LLMOps StudyBuddy** project.
-It adds **Pydantic-based question schemas** to represent:
+This branch introduces the **first prompt templates** for the **LLMOps StudyBuddy** project.
+It adds structured **LangChain `PromptTemplate` objects** used to generate:
 
 * Multiple-choice questions (MCQs)
 * Fill-in-the-blank questions
 
-These schemas provide a **typed, validated structure** for question data that future components (generators, evaluators, agents, RAG pipelines) can rely on.
+These templates instruct the LLM to return **strict JSON output** compatible with the project’s Pydantic question schemas.
 
 ## 🗂️ **Updated Project Structure**
 
-Only the **new file and its folder** are annotated below:
+Only the **new folder and file** added in this branch are annotated:
 
 ```text
 LLMOPS-STUDY-BUDDY/
@@ -27,56 +27,52 @@ LLMOPS-STUDY-BUDDY/
 ├── src/
 │   ├── common/
 │   ├── config/
-│   └── models/
-│       └── question_schemas.py    # 📘 Pydantic schemas for MCQ and fill-in-the-blank questions
+│   ├── models/
+│   └── prompts/
+│       └── templates.py    # 🎨 Prompt templates for MCQ + fill-in-the-blank generation
 └── README.md
 ```
 
 ## 🧠 **What This Branch Adds**
 
-### 📘 `question_schemas.py`
+### 🎨 `templates.py`
 
-This module defines two core Pydantic models:
+This module defines two reusable `PromptTemplate` objects:
 
-* `MCQQuestion`
+* `mcq_prompt_template`
 
-  * `question`: the question text
-  * `options`: list of answer options
-  * `correct_answer`: correct option from the list
-  * A `clean_question` validator that normalises the question field (e.g. when it arrives as a dict with `description`).
+  * Generates a structured MCQ about a given topic and difficulty
+  * Returns JSON with: `"question"`, `"options"`, `"correct_answer"`
+  * Ensures exactly 4 options
+  * Fully aligned with the `MCQQuestion` Pydantic schema
 
-* `FillBlankQuestion`
+* `fill_blank_prompt_template`
 
-  * `question`: text containing `___` where the blank should appear
-  * `answer`: the correct word or phrase
-  * A `clean_question` validator with the same normalisation behaviour.
+  * Generates a fill-in-the-blank question containing `"_____"`
+  * Returns JSON with: `"question"` and `"answer"`
+  * Compatible with the `FillBlankQuestion` schema
 
-These models enforce **consistent structure** and **light cleaning** of question text, which will be important when working with LLM outputs and external data sources.
+Both templates enforce **strict formatting**, enabling reliable downstream validation and processing.
 
 ## 🧪 **Example Usage**
 
 ```python
-from models.question_schemas import MCQQuestion, FillBlankQuestion
+from prompts.templates import mcq_prompt_template, fill_blank_prompt_template
 
-mcq = MCQQuestion(
-    question="What is the time complexity of binary search?",
-    options=["O(n)", "O(log n)", "O(n log n)", "O(1)"],
-    correct_answer="O(log n)"
-)
+prompt = mcq_prompt_template.format(topic="machine learning", difficulty="medium")
+print(prompt)
 
-fill = FillBlankQuestion(
-    question="The derivative of sin(x) is ___.",
-    answer="cos(x)"
-)
+prompt2 = fill_blank_prompt_template.format(topic="calculus", difficulty="easy")
+print(prompt2)
 ```
 
-These objects can now be passed between services, stored, validated, or used as the target schema for LLM responses.
+These templates can be passed directly into an LLM chain or wrapped by a higher-level service.
 
 ## ✅ **In Summary**
 
 This branch:
 
-* Adds a dedicated **`models/` layer** for structured data
-* Introduces **Pydantic schemas** for MCQ and fill-in-the-blank questions
-* Normalises question text to handle less structured inputs
-* Lays the groundwork for future components that will **generate, transform, and assess** study questions
+* Adds a dedicated **`prompts/`** folder
+* Provides **structured LangChain prompt templates** for MCQ and fill-blank generation
+* Ensures all question generation follows a **strict JSON schema**
+* Builds the foundation for future components such as LLM pipelines, tutoring agents, and evaluation modules
