@@ -52,7 +52,7 @@ class Settings:
     # ----------------------------------------------------------
 
     # Name of the model deployed for conversational reasoning
-    MODEL_NAME: str = "llama-3.1-8b-instant"
+    MODEL_NAME: str = "llama-3.3-70b-versatile"
 
     # Degree of randomness in the model's output generation
     TEMPERATURE: float = 0.9
