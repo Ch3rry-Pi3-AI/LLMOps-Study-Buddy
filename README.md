@@ -1,103 +1,122 @@
-# ☸️ **Minikube and kubectl Setup — LLMOps StudyBuddy**
+# 🔗 **GitHub Integration and Firewall Configuration — LLMOps StudyBuddy**
 
-In this stage, we install and configure **Minikube** and **kubectl** on our **Google Cloud Platform (GCP) Virtual Machine**.
-These tools allow us to create and manage a **local Kubernetes cluster** within the VM, which will later be used to deploy and orchestrate the **LLMOps StudyBuddy** application.
+In this stage, we connect the **LLMOps StudyBuddy** GitHub repository to the **Google Cloud Platform (GCP) Virtual Machine**, allowing direct version-control operations from the VM.
+We also configure a **firewall rule** to ensure the VM can communicate securely with GitHub and external services.
 
-## 🧭 **Step 1 — Install Minikube**
+## 🧭 Step 1 — Clone the GitHub Repository
 
-Go to the official Minikube documentation:
-👉 [https://minikube.sigs.k8s.io/docs/start/](https://minikube.sigs.k8s.io/docs/start/)
+Go to your project’s GitHub repository.
+Click the green **“<> Code”** dropdown and copy the **HTTPS URL** of the repository.
 
-Select **Linux** as the operating system, then copy and paste the first installation command into your VM terminal:
+Example:
+
+```
+https://github.com/Ch3rry-Pi3-AI/LLMOps-StudyBuddy.git
+```
+
+In your GCP VM terminal, run:
 
 ```bash
-curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+git clone https://github.com/Ch3rry-Pi3-AI/LLMOps-StudyBuddy.git
 ```
 
-You should see output similar to:
+(Replace the URL above with your actual repository link.)
 
-```
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-100  133M  100  133M    0     0   132M      0  0:00:01  0:00:01 --:--:--  132M
-```
-
-Now install Minikube and remove the downloaded file:
+Navigate into the cloned directory:
 
 ```bash
-sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+cd LLMOps-StudyBuddy
 ```
 
-Start your Minikube cluster:
+You are now inside your project folder on the VM.
+
+## ⚙️ Step 2 — Configure Git Identity
+
+Set your Git identity so commits made from the VM are correctly attributed to you:
 
 ```bash
-minikube start
+git config --global user.email "the_rfc@hotmai.co.uk"
+git config --global user.name "Roger J. Campbell"
 ```
 
-Expected output:
-
-```
-😄  minikube v1.37.0 on Ubuntu 24.04 (amd64)
-✨  Automatically selected the docker driver. Other choices: none, ssh
-📌  Using Docker driver with root privileges
-👍  Starting "minikube" primary control-plane node in "minikube" cluster
-🚜  Pulling base image v0.0.48 ...
-💾  Downloading Kubernetes v1.34.0 preload ...
-🔥  Creating docker container (CPUs=2, Memory=3900MB) ...
-🐳  Preparing Kubernetes v1.34.0 on Docker 28.4.0 ...
-🔗  Configuring bridge CNI ...
-🔎  Verifying Kubernetes components...
-🌟  Enabled addons: storage-provisioner, default-storageclass
-💡  kubectl not found. If you need it, try: 'minikube kubectl -- get pods -A'
-🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
-```
-
-This confirms that Minikube is installed and your cluster is running.
-
-## ⚙️ **Step 2 — Install kubectl**
-
-Install **kubectl**, the command-line tool used to manage Kubernetes clusters.
-
-Go to:
-👉 [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-
-Scroll to **“1. Install kubectl binary with curl on Linux”** and run:
+Verify the configuration:
 
 ```bash
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+git config --list
 ```
 
-Expected output:
+You should see your email and username listed.
 
-```
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-100   138  100   138    0     0   2486      0 --:--:-- --:--:-- --:--:--  2509
-100 57.7M  100 57.7M    0     0   115M      0 --:--:-- --:--:-- --:--:--  115M
-```
+## 🔑 Step 3 — Generate a GitHub Personal Access Token
 
-Scroll further down to **“Install using other package management”**, select **Snap**, and run:
+1. Go to **GitHub → Settings**
+
+2. Scroll to **Developer Settings**
+
+3. Click **Personal access tokens → Tokens (classic)**
+
+4. Select **Generate new token (classic)**
+
+5. Name it something like `studybuddy-ci`
+
+6. Select the following scopes:
+
+   * `repo`
+   * `workflow`
+   * `admin:org`
+   * `admin:repo_hook`
+   * `admin:org_hook`
+
+7. Click **Generate token**
+
+⚠️ Copy the token immediately — GitHub will not show it again.
+
+## 🚀 Step 4 — Authenticate and Pull from GitHub
+
+Use your token when pulling or pushing from the VM.
 
 ```bash
-sudo snap install kubectl --classic
-kubectl version --client
+git pull origin main
 ```
 
-Expected output:
+When prompted:
+
+* **Username:** your GitHub username
+* **Password:** your personal access token
+
+You are now authenticated.
+
+## 🔥 Step 5 — Create a GCP Firewall Rule
+
+Next, configure a firewall rule to ensure your VM can communicate externally (e.g., GitHub, Docker Hub, package registries).
+
+1. In the **Google Cloud Console**, search for **Network Security**
+2. Under **Cloud NGFW**, click **Firewall rule → + Create firewall policy**
+3. Set the **Policy name** to:
 
 ```
-kubectl 1.34.1 from Canonical✓ installed
-Client Version: v1.34.1
-Kustomize Version: v5.7.1
+allow-studybuddy
 ```
 
-Your **kubectl** installation is now complete and correctly configured.
+4. Configure:
 
-## ✅ **In Summary**
+| Field               | Setting                      |
+| ------------------- | ---------------------------- |
+| Targets             | All instances in the network |
+| Source IPv4 ranges  | `0.0.0.0/0`                  |
+| Protocols and ports | Allow all                    |
+
+5. Click **Create**
+
+Your firewall policy now allows full outbound communication between your VM and GitHub.
+
+## ✅ In Summary
 
 You have now successfully:
 
-* Installed **Minikube** and started a Kubernetes cluster
-* Installed **kubectl** and verified the client version
+* Cloned the **LLMOps StudyBuddy** repository onto your GCP VM
+* Configured Git identity for version control
+* Created a GitHub personal access token for secure authentication
+* Set up a GCP firewall rule allowing full outbound communication
 
-Your GCP VM is now fully equipped with **Docker**, **Minikube**, and **kubectl**, enabling deployment and management of the **LLMOps StudyBuddy** system in a Kubernetes environment.
+Your VM is now fully connected to GitHub and ready for Docker builds, Kubernetes deployment, CI/CD, and further development of the StudyBuddy system.
