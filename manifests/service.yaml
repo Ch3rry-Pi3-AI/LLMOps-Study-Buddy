@@ -1,0 +1,37 @@
+# --------------------------------------------------------------
+# Kubernetes Service Definition
+# llmops-service
+#
+# Exposes the Streamlit StudyBuddy app running on port 8501
+# to the cluster (and externally when using NodePort).
+# --------------------------------------------------------------
+
+apiVersion: v1
+kind: Service
+
+# --------------------------------------------------------------
+# Metadata
+# --------------------------------------------------------------
+metadata:
+  name: llmops-service          # Name of the service
+  labels:
+    app: llmops-app             # Must match the Deployment pod labels
+
+# --------------------------------------------------------------
+# Service Specification
+# --------------------------------------------------------------
+spec:
+  type: NodePort                # Exposes the app outside the cluster
+  selector:
+    app: llmops-app             # Target pods with this label
+
+  # ------------------------------------------------------------
+  # Port Mapping
+  # port:       internal cluster port
+  # targetPort: container port (Streamlit default 8501)
+  # ------------------------------------------------------------
+  ports:
+    - name: http
+      port: 80                  # Cluster-wide access on port 80
+      targetPort: 8501          # Streamlit runs on 8501 in the container
+      protocol: TCP

@@ -1,0 +1,55 @@
+# --------------------------------------------------------------
+# Kubernetes Deployment
+# llmops-app
+#
+# Deploys the Streamlit StudyBuddy application using the
+# container image hosted on Docker Hub.
+# --------------------------------------------------------------
+
+apiVersion: apps/v1
+kind: Deployment
+
+# --------------------------------------------------------------
+# Metadata
+# --------------------------------------------------------------
+metadata:
+  name: llmops-app                  # Deployment name
+
+# --------------------------------------------------------------
+# Deployment Specification
+# --------------------------------------------------------------
+spec:
+  replicas: 2                       # Number of pod replicas
+  selector:
+    matchLabels:
+      app: llmops-app               # Must match pod labels below
+
+  # ------------------------------------------------------------
+  # Pod Template
+  # ------------------------------------------------------------
+  template:
+    metadata:
+      labels:
+        app: llmops-app             # Labels applied to pods
+
+    spec:
+      containers:
+        - name: llmops-app
+          image: ch3rrypi3/studybuddy:v17   # Docker image version
+
+          # ------------------------------------------------------
+          # Exposed Container Port
+          # ------------------------------------------------------
+          ports:
+            - containerPort: 8501            # Streamlit default port
+
+          # ------------------------------------------------------
+          # Environment Variables
+          # Loaded securely from Kubernetes Secrets
+          # ------------------------------------------------------
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: groq-api-secret       # Name of the secret
+                  key: GROQ_API_KEY           # Secret key inside it

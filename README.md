@@ -1,99 +1,128 @@
-# 🎨 **Streamlit Application — LLMOps StudyBuddy**
+# 🐳 **Containerisation & Kubernetes Deployment — LLMOps StudyBuddy**
 
-This branch introduces the **interactive user interface** for the LLMOps StudyBuddy project.
-The new `app.py` file provides a full Streamlit-powered quiz experience that allows users to:
+This branch introduces the **Docker containerisation layer** and **Kubernetes deployment configuration** for the LLMOps StudyBuddy project.
 
-* Select a topic, difficulty, and question type
-* Generate multiple-choice or fill-in-the-blank questions
-* Attempt the quiz interactively
-* View detailed results
-* Save and download a CSV of completed quiz attempts
+With these additions, the StudyBuddy Streamlit application can now be:
 
-The Streamlit interface sits on top of the existing LLM-powered generation pipeline and delivers a clean, responsive, and user-friendly quiz workflow.
+* Packaged into a reproducible Docker image
+* Deployed on any Kubernetes cluster
+* Exposed externally via a NodePort service
+* Configured securely using Kubernetes Secrets
 
-## 🎥 **Application Demonstrations**
+This marks the beginning of StudyBuddy’s production-ready infrastructure.
 
-Below are two demonstrations of the Streamlit StudyBuddy app in action.
+# 🐳 **Dockerfile**
 
-### **Multiple-Choice Question Demo**
+A new `Dockerfile` has been added at the project root.
+It defines a minimal, efficient Python 3.12 Streamlit image with:
 
-<p align="center">
-  <img src="img/streamlit/streamlit_app1.gif" alt="StudyBuddy Multiple Choice Demo" width="100%">
-</p>
+* Clean environment setup
+* System dependencies
+* Editable install of the StudyBuddy package
+* Proper port exposure (`8501`)
+* A launch command for Streamlit
 
-### **Fill-in-the-Blank Question Demo**
+This enables portable, reproducible deployments of the StudyBuddy application.
 
-<p align="center">
-  <img src="img/streamlit/streamlit_app2.gif" alt="StudyBuddy Fill in the Blank Demo" width="100%">
-</p>
+# ☸️ **Kubernetes Manifests**
 
-## 🗂️ **Updated Project Structure**
+Inside the `manifests/` directory, two new files define the Kubernetes deployment workflow:
 
-Only the **new file** added in this branch is annotated below:
+* `deployment.yaml` — defines replicas, container configuration, ports, and secret-based environment variables
+* `service.yaml` — exposes the StudyBuddy app externally via NodePort
+
+Together, these manifests allow you to run StudyBuddy on Minikube, KIND, GKE, AKS, or EKS.
+
+# 🗂️ **Updated Project Structure**
+
+Only the **new files** added in this branch are annotated below:
 
 ```text
 LLMOPS-STUDY-BUDDY/
+├── Dockerfile                         # 🐳 Container definition for StudyBuddy
+├── manifests/
+│   ├── deployment.yaml                # ☸️ Kubernetes Deployment for running the app
+│   └── service.yaml                   # 🌐 NodePort Service exposing Streamlit
 ├── .venv/
 ├── .env
 ├── .gitignore
 ├── .python-version
-├── app.py                      # 🎨 Streamlit application for StudyBuddy
+├── app.py
 ├── img/
 │   └── streamlit/
 │       ├── streamlit_app1.gif
 │       └── streamlit_app2.gif
 ├── llmops_study_buddy.egg-info/
-├── manifests/
 ├── pyproject.toml
 ├── requirements.txt
 ├── setup.py
 ├── uv.lock
-├── src/
-│   ├── common/
-│   ├── config/
-│   ├── models/
-│   ├── prompts/
-│   ├── llm/
-│   ├── generator/
-│   └── utils/
-└── README.md
+└── src/
+    ├── common/
+    ├── config/
+    ├── models/
+    ├── prompts/
+    ├── llm/
+    ├── generator/
+    └── utils/
 ```
 
-## 🚀 **What This Branch Adds**
+# 🚀 **How to Build and Run the Docker Image**
 
-### 🎨 `app.py`
-
-The new `app.py` file implements the complete Streamlit interface for StudyBuddy.
-
-It includes:
-
-* Sidebar configuration for question type, topic, difficulty, and number of questions
-* A clean quiz generation workflow
-* Interactive question display with radio buttons or text inputs
-* A results page with correctness feedback and scoring
-* CSV export functionality
-* Session-state-driven reruns for smooth user experience
-
-This marks the first end-user–facing interface layer of the StudyBuddy system.
-
-## ▶️ **How to Run the Streamlit App**
-
-From the project root, execute:
+Build the image:
 
 ```bash
-streamlit run app.py
+docker build -t studybuddy:latest .
 ```
 
-This launches the interactive StudyBuddy interface in your browser.
+Run the container:
 
-## ✅ **In Summary**
+```bash
+docker run -p 8501:8501 studybuddy:latest
+```
+
+Then open:
+
+```
+http://localhost:8501
+```
+
+# ☸️ **How to Deploy StudyBuddy to Kubernetes**
+
+Apply both manifests:
+
+```bash
+kubectl apply -f manifests/
+```
+
+Check pods and services:
+
+```bash
+kubectl get pods
+kubectl get svc
+```
+
+On Minikube, open the app:
+
+```bash
+minikube service llmops-service
+```
+
+# 🔐 **Required Kubernetes Secret**
+
+Your Deployment expects this secret:
+
+```bash
+kubectl create secret generic groq-api-secret \
+  --from-literal=GROQ_API_KEY="YOUR_API_KEY_HERE"
+```
+
+# ✅ **In Summary**
 
 This branch:
 
-* Adds the interactive **Streamlit application layer**
-* Introduces the root-level `app.py` file
-* Provides live demos via full-width GIF animations
-* Connects the LLM generation pipeline with a polished UI
-* Enables full quiz creation, attempt, evaluation, and export
-
-Your StudyBuddy system now has a complete user interface ready for demonstrations, testing, and future enhancement.
+* Adds a production-ready **Dockerfile**
+* Introduces complete **Kubernetes manifests**
+* Enables cluster-ready deployment of StudyBuddy
+* Provides external access through a NodePort service
+* Lays the infrastructure foundation for scaling, CI/CD, and cloud deployments
