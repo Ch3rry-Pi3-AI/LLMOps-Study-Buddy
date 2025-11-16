@@ -1,127 +1,87 @@
-# 🔔 1️⃣6️⃣ **Webhooks — Automating CI/CD Trigger with GitHub and Jenkins**
+# 🎓 **LLMOps StudyBuddy — Project Overview**
 
-This stage enables **full CI/CD automation** for the **LLMOps StudyBuddy** project.
-Until now, you manually triggered the Jenkins pipeline after each Git push.
-With **GitHub Webhooks**, Jenkins will now automatically start the pipeline whenever you push new commits.
-
-## 🧩 1️⃣7️⃣ What Webhooks Do
-
-A **Webhook** is an automatic notification system between GitHub and Jenkins.
-
-Whenever you push to GitHub:
-
-1. GitHub immediately sends a JSON payload to Jenkins
-2. Jenkins receives the hook
-3. Jenkins triggers your CI/CD pipeline automatically
-4. The pipeline builds the Docker image
-5. Pushes it to DockerHub
-6. ArgoCD detects the update and deploys it to Kubernetes
-
-No more manual “Build Now”.
-
-## ⚙️ 1️⃣8️⃣ Configure a Webhook in GitHub
-
-1. Open your **StudyBuddy GitHub repository**
-2. Click **Settings**
-3. Select **Webhooks**
-4. Click **Add webhook**
-
-In **Payload URL**, enter your Jenkins external IP and the GitHub webhook endpoint:
-
-```
-http://<YOUR_VM_EXTERNAL_IP>:8080/github-webhook/
-```
-
-**Content type:** `application/json`
+This repository presents a complete **LLMOps workflow** for **StudyBuddy**, an intelligent quiz-generation system powered by LLMs.  
+It integrates **LLM question generation**, **Streamlit UI**, **containerisation**, **Kubernetes deployment**, and a fully automated **CI/CD pipeline** using **Jenkins**, **ArgoCD**, and **GitHub Webhooks**.
 
 <p align="center">
-  <img src="img/webhook/github_add_webhook.png" alt="Add GitHub Webhook" width="100%">
+  <img src="img/streamlit/streamlit_app1.gif" alt="StudyBuddy Multiple Choice Demo" width="100%">
 </p>
-
-Click **Add Webhook**.
-
-## 🧠 1️⃣9️⃣ Configure Jenkins to Accept Webhooks
-
-1. Open **Jenkins Dashboard**
-2. Click your pipeline (**GITOPS PROJECT** or your chosen name)
-3. Click **Configure**
-4. Scroll to **Build Triggers**
-5. Enable:
-
-```
-GitHub hook trigger for GITScm polling
-```
 
 <p align="center">
-  <img src="img/webhook/jenkins_configure.png" alt="Configure Jenkins Webhook Trigger" width="100%">
+  <img src="img/streamlit/streamlit_app2.gif" alt="StudyBuddy Fill in the Blank Demo" width="100%">
 </p>
 
-Click **Apply**, then **Save**.
+## 🧩 **Grouped Stages**
 
-Jenkins will now listen for GitHub push events.
+|   #     | Stage                                   | Description |
+| :-----: | :-------------------------------------- | :---------- |
+| **00**  | **Project Setup**                       | Established the base VS Code structure, environment files, dependency management, and core configuration. |
+| **01–05** | **Core LLM Logic**                    | Implemented question schemas, prompt templates, a Groq client, a high-level question generator, and quiz/helper utilities — forming the core reasoning and quiz engine. |
+| **06**  | **Streamlit Application**               | Developed a full-featured Streamlit UI for quiz configuration, question display, scoring, and CSV export of results. |
+| **07**  | **Containerisation & Manifests**        | Authored the Dockerfile and Kubernetes manifests required to deploy the StudyBuddy app as a containerised service. |
+| **08**  | **GCP VM & Docker Setup**               | Provisioned a GCP VM, installed Docker Engine, and prepared the host environment for container builds and cluster tooling. |
+| **09**  | **Minikube & kubectl Setup**            | Installed and configured Minikube and kubectl on the VM to run a local Kubernetes cluster. |
+| **10**  | **GitHub Integration & Firewall Setup** | Cloned the GitHub repository onto the VM, configured Git identity and personal access tokens, and set up firewall rules for external access. |
+| **11**  | **Continuous Integration (Jenkins)**    | Installed Jenkins via Docker-in-Docker, configured plugins and credentials, and created a Jenkinsfile to define the CI pipeline. |
+| **12**  | **Continuous Deployment (ArgoCD)**      | Installed ArgoCD, connected it to the repo, created a GitOps application, and automated deployments to the Kubernetes cluster. |
+| **13**  | **GitHub Webhooks**                     | Added GitHub webhooks to automatically trigger Jenkins on each push, closing the loop for fully automated CI/CD. |
 
-## 🔄 2️⃣0️⃣ Test the Webhook
+## 🗂️ **Project Structure**
 
-Create a harmless commit to your repo:
+```text
+LLMOPS-STUDY-BUDDY/
+├── Dockerfile                         # 🐳 Builds the StudyBuddy container image for deployment
+├── Jenkinsfile                        # ⚙️ Jenkins CI/CD pipeline (build → push → deploy via GitOps)
+├── manifests/                         # ☸️ Kubernetes manifests used by ArgoCD
+│   ├── deployment.yaml                # Kubernetes Deployment for running the StudyBuddy Streamlit app
+│   └── service.yaml                   # NodePort Service exposing the StudyBuddy web interface
+├── .venv/                             # Local virtual environment (created by uv or Python tooling)
+├── .env                               # API keys + environment variables (GROQ API key, etc.)
+├── .gitignore                         # Ignore rules for venv, logs, compiled files, artefacts
+├── .python-version                    # Python version pin (ensures consistent environment)
+├── app.py                             # 🎨 Streamlit front-end application entrypoint for StudyBuddy
+├── img/                               # 📸 All project documentation screenshots and GIFs
+├── llmops_study_buddy.egg-info/       # 📦 Auto-generated metadata folder created by setup.py
+├── pyproject.toml                     # 🧩 Project metadata, build config, dependency definitions
+├── requirements.txt                   # 📦 Runtime requirements (Streamlit, LangChain, Groq, etc.)
+├── setup.py                           # 🔧 Editable install config for pip/packaging
+├── uv.lock                            # 🔒 Exact dependency lockfile generated by uv
+└── src/                               # 🧠 Core StudyBuddy source code (LLM logic + utils)
+    ├── common/                        # 🪵 Shared utilities
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   ├── custom_exception.py        # Centralised error-handling class with rich traceback context
+    │   └── logger.py                  # Logging configuration (file + console)
+    ├── config/                        # ⚙️ Environment + global settings
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   └── settings.py                # Settings loader (API keys, model params, retries)
+    ├── models/                        # 🧱 Pydantic schemas for question structures
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   └── question_schemas.py        # MCQ + fill-blank typed schemas ensuring structured output
+    ├── prompts/                       # 🗣️ Prompt templates for LLM question generation
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   └── templates.py               # PromptTemplates for MCQ + fill-blank JSON responses
+    ├── llm/                           # 🤖 Groq LLM client integration
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   └── groq_client.py             # Factory returning configured Groq Chat model
+    ├── generator/                     # 🧠 High-level question generation logic
+    │   ├── __init__.py                # Marks directory as a Python package
+    │   └── question_generator.py      # Orchestrates prompts → LLM → Pydantic parsing + fallback retry
+    └── utils/                         # 🧪 Helper functions for Streamlit UI + quiz management
+        ├── __init__.py                # Marks directory as a Python package
+        └── helpers.py                 # QuizManager, scoring logic, CSV export, rerun helpers
+````
 
-```bash
-git add .
-git commit -m "Testing Webhook Trigger"
-git push origin main
-```
+## 🚀 **Summary**
 
-Go to your Jenkins Dashboard.
-Within a few seconds, Jenkins should automatically start a new build.
+The **LLMOps StudyBuddy** project demonstrates how to take a full LLM-powered educational application from **core logic** to **production-grade deployment**.
 
-## 👀 2️⃣1️⃣ Verify the Trigger Source
+It combines:
 
-Previously, manual builds displayed something like:
+* Typed schemas, structured prompts, and a Groq-backed LLM client
+* A Streamlit UI for interactive quiz generation and evaluation
+* Docker-based containerisation and Kubernetes manifests
+* CI with Jenkins and image publication to DockerHub
+* CD with ArgoCD and a clean GitOps workflow
+* Webhooks for fully automatic, push-triggered deployments
 
-<p align="center">
-  <img src="img/webhook/previously.png" alt="Previously manual trigger" width="100%">
-</p>
-
-After setting up the webhook, open the new auto-triggered build and check the top lines.
-It should show:
-
-<p align="center">
-  <img src="img/webhook/now.png" alt="Started by GitHub push" width="100%">
-</p>
-
-This confirms GitHub successfully triggered the pipeline.
-
-## 🎯 2️⃣2️⃣ What You Have Achieved
-
-You now have a **fully automated StudyBuddy CI/CD pipeline**:
-
-1. Push to GitHub
-2. GitHub Webhook notifies Jenkins
-3. Jenkins builds the Docker image
-4. Jenkins pushes to DockerHub
-5. ArgoCD detects changes in repo
-6. ArgoCD deploys to Kubernetes
-7. Minikube exposes the service
-8. The live StudyBuddy app updates automatically
-
-This is full GitOps automation.
-
-## 🧹 2️⃣3️⃣ Optional Cleanup
-
-To shut down resources:
-
-* Go to **Google Cloud Console → Compute Engine → VM Instances**
-* Stop or delete the VM
-
-This prevents unnecessary billing.
-
-## ✅ 2️⃣4️⃣ Project Complete
-
-You have now implemented:
-
-* Continuous Integration
-* Continuous Deployment
-* Docker → Kubernetes automation
-* GitOps via ArgoCD
-* Automatic CI/CD triggers via Webhooks
-
-Your **LLMOps StudyBuddy** system is now a fully automated, production-grade pipeline.
+Taken together, this forms a **fully automated LLMOps pipeline** for StudyBuddy — from a single quiz request in the UI all the way down to cloud-native infrastructure and GitOps automation.
