@@ -1,10 +1,10 @@
-# 🔔 **1️⃣ Webhooks — Automating CI/CD Trigger with GitHub and Jenkins**
+# 🔔 **Webhooks — Automating CI/CD Trigger with GitHub and Jenkins**
 
 This stage enables **full CI/CD automation** for the **LLMOps StudyBuddy** project.
 Until now, you manually triggered the Jenkins pipeline after each Git push.
 With **GitHub Webhooks**, Jenkins will now automatically start the pipeline whenever you push new commits.
 
-## 🧩 **2️⃣ What Webhooks Do**
+## 🧩 **1️⃣ What Webhooks Do**
 
 A **Webhook** is an automatic notification system between GitHub and Jenkins.
 
@@ -19,7 +19,7 @@ Whenever you push to GitHub:
 
 No more manual “Build Now”.
 
-## ⚙️ **3️⃣ Configure a Webhook in GitHub**
+## ⚙️ **2️⃣ Configure a Webhook in GitHub**
 
 1. Open your **StudyBuddy GitHub repository**
 2. Click **Settings**
@@ -40,7 +40,7 @@ http://<YOUR_VM_EXTERNAL_IP>:8080/github-webhook/
 
 Click **Add Webhook**.
 
-## 🧠 **4️⃣ Configure Jenkins to Accept Webhooks**
+## 🧠 **3️⃣ Configure Jenkins to Accept Webhooks**
 
 1. Open **Jenkins Dashboard**
 2. Click your pipeline (**GITOPS PROJECT** or your chosen name**)
@@ -60,7 +60,7 @@ Click **Apply**, then **Save**.
 
 Jenkins will now listen for GitHub push events.
 
-## 🔄 **5️⃣ Test the Webhook**
+## 🔄 **4️⃣ Test the Webhook**
 
 Create a harmless commit to your repo:
 
@@ -73,7 +73,7 @@ git push origin main
 Go to your Jenkins Dashboard.
 Within a few seconds, Jenkins should automatically start a new build.
 
-## 👀 **6️⃣ Verify the Trigger Source**
+## 👀 **5️⃣ Verify the Trigger Source**
 
 Previously, manual builds displayed something like:
 
@@ -90,7 +90,7 @@ It should show:
 
 This confirms GitHub successfully triggered the pipeline.
 
-## 🎯 **7️⃣ What You Have Achieved**
+## 🎯 **6️⃣ What You Have Achieved**
 
 You now have a **fully automated StudyBuddy CI/CD pipeline**:
 
@@ -105,7 +105,7 @@ You now have a **fully automated StudyBuddy CI/CD pipeline**:
 
 This is full GitOps automation.
 
-## 🧹 **8️⃣ Optional Cleanup**
+## 🧹 **7️⃣ Optional Cleanup**
 
 To shut down resources:
 
@@ -114,7 +114,7 @@ To shut down resources:
 
 This prevents unnecessary billing.
 
-## ✅ **9️⃣ Project Complete**
+## ✅ **8️⃣ Project Complete**
 
 You have now implemented:
 
