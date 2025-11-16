@@ -64,6 +64,7 @@ You should see your email and username listed.
    * `repo`
    * `workflow`
    * `admin:org`
+   * `admin:public_key`
    * `admin:repo_hook`
    * `admin:org_hook`
 
