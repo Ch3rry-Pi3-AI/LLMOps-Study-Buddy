@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: llmops-app
-          image: ch3rrypi3/studybuddy:v10
+          image: ch3rrypi3/studybuddy:v11
 
           # ------------------------------------------------------
           # Exposed Container Port
