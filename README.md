@@ -1,122 +1,201 @@
-# 🔗 **GitHub Integration and Firewall Configuration — LLMOps StudyBuddy**
+# ⚙️ **Jenkins Setup on GCP VM using Docker-in-Docker (DinD) — LLMOps StudyBuddy**
 
-In this stage, we connect the **LLMOps StudyBuddy** GitHub repository to the **Google Cloud Platform (GCP) Virtual Machine**, allowing direct version-control operations from the VM.
-We also configure a **firewall rule** to ensure the VM can communicate securely with GitHub and external services.
+In this stage, you will set up **Jenkins** on your **Google Cloud Platform (GCP) Virtual Machine** using a **Docker-in-Docker (DinD)** configuration.
+This allows Jenkins to run inside a Docker container while still being able to interact with the host Docker daemon.
+The result is a CI/CD engine capable of building images, pushing to registries, and orchestrating Kubernetes deployments for the **LLMOps StudyBuddy** project.
 
-## 🧭 Step 1 — Clone the GitHub Repository
+## 🧩 1️⃣ Ensure Jenkins Runs on the Same Network as Minikube
 
-Go to your project’s GitHub repository.
-Click the green **“<> Code”** dropdown and copy the **HTTPS URL** of the repository.
-
-Example:
-
-```
-https://github.com/Ch3rry-Pi3-AI/LLMOps-StudyBuddy.git
-```
-
-In your GCP VM terminal, run:
+Run this inside your **GCP VM terminal**:
 
 ```bash
-git clone https://github.com/Ch3rry-Pi3-AI/LLMOps-StudyBuddy.git
+docker run -d --name jenkins \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(which docker):/usr/bin/docker \
+  -u root \
+  -e DOCKER_GID=$(getent group docker | cut -d: -f3) \
+  --network minikube \
+  jenkins/jenkins:lts
 ```
 
-(Replace the URL above with your actual repository link.)
-
-Navigate into the cloned directory:
+Verify containers:
 
 ```bash
-cd LLMOps-StudyBuddy
+docker ps
 ```
 
-You are now inside your project folder on the VM.
-
-## ⚙️ Step 2 — Configure Git Identity
-
-Set your Git identity so commits made from the VM are correctly attributed to you:
+## 🧠 2️⃣ Retrieve the Jenkins Admin Password
 
 ```bash
-git config --global user.email "the_rfc@hotmai.co.uk"
-git config --global user.name "Roger J. Campbell"
+docker logs jenkins
 ```
 
-Verify the configuration:
+Look for a message containing a long auto-generated password such as:
+
+```
+bf98ea15f0664d158749e387bdd48970
+```
+
+Copy it.
+
+## 🌐 3️⃣ Access Jenkins in Your Browser
+
+1. Go to **VM Instances** in GCP
+2. Copy your VM’s **External IP**
+3. Open:
+
+```
+http://<YOUR_VM_EXTERNAL_IP>:8080
+```
+
+<p align="center">
+  <img src="img/jenkins/admin_login.png" alt="Jenkins Admin Login" width="100%">
+</p>
+
+## 🧩 4️⃣ Install Plugins and Create Admin User
+
+### Install Suggested Plugins
+
+<p align="center">
+  <img src="img/jenkins/install_plugins.png" alt="Jenkins Install Plugins" width="100%">
+</p>
+
+### Create Admin User
+
+<p align="center">
+  <img src="img/jenkins/create_admin_user.png" alt="Create Admin User" width="100%">
+</p>
+
+You will then see the dashboard:
+
+<p align="center">
+  <img src="img/jenkins/jenkins_dashboard.png" alt="Jenkins Dashboard" width="100%">
+</p>
+
+## 🔧 5️⃣ Install Required Jenkins Plugins
+
+From Jenkins:
+
+1. Manage Jenkins
+2. Plugins
+3. Available Plugins
+
+Install:
+
+* Docker
+* Docker Pipeline
+
+<p align="center">
+  <img src="img/jenkins/install_docker_plugins.png" alt="Install Docker Plugins" width="100%">
+</p>
+
+Then install:
+
+* Kubernetes
+
+<p align="center">
+  <img src="img/jenkins/install_kubernetes_plugin.png" alt="Install Kubernetes Plugin" width="100%">
+</p>
+
+## 🔁 6️⃣ Restart Jenkins
 
 ```bash
-git config --list
+docker restart jenkins
 ```
 
-You should see your email and username listed.
+## 🧱 7️⃣ Set Up Python Inside the Jenkins Container
 
-## 🔑 Step 3 — Generate a GitHub Personal Access Token
-
-1. Go to **GitHub → Settings**
-
-2. Scroll to **Developer Settings**
-
-3. Click **Personal access tokens → Tokens (classic)**
-
-4. Select **Generate new token (classic)**
-
-5. Name it something like `studybuddy-ci`
-
-6. Select the following scopes:
-
-   * `repo`
-   * `workflow`
-   * `admin:org`
-   * `admin:repo_hook`
-   * `admin:org_hook`
-
-7. Click **Generate token**
-
-⚠️ Copy the token immediately — GitHub will not show it again.
-
-## 🚀 Step 4 — Authenticate and Pull from GitHub
-
-Use your token when pulling or pushing from the VM.
+Enter the container:
 
 ```bash
-git pull origin main
+docker exec -it jenkins bash
 ```
 
-When prompted:
+Install Python 3 and tooling:
 
-* **Username:** your GitHub username
-* **Password:** your personal access token
-
-You are now authenticated.
-
-## 🔥 Step 5 — Create a GCP Firewall Rule
-
-Next, configure a firewall rule to ensure your VM can communicate externally (e.g., GitHub, Docker Hub, package registries).
-
-1. In the **Google Cloud Console**, search for **Network Security**
-2. Under **Cloud NGFW**, click **Firewall rule → + Create firewall policy**
-3. Set the **Policy name** to:
-
-```
-allow-studybuddy
+```bash
+apt update -y
+apt install -y python3
+ln -s /usr/bin/python3 /usr/bin/python
+apt install -y python3-pip
+apt install -y python3-venv
+exit
 ```
 
-4. Configure:
+Restart Jenkins:
 
-| Field               | Setting                      |
-| ------------------- | ---------------------------- |
-| Targets             | All instances in the network |
-| Source IPv4 ranges  | `0.0.0.0/0`                  |
-| Protocols and ports | Allow all                    |
+```bash
+docker restart jenkins
+```
 
-5. Click **Create**
+## 🔐 8️⃣ Add GitHub Credentials in Jenkins
 
-Your firewall policy now allows full outbound communication between your VM and GitHub.
+1. Manage Jenkins → **Credentials**
+2. Open the **(global)** store
 
-## ✅ In Summary
+<p align="center">
+  <img src="img/jenkins/add_credential.png" alt="Add Credential" width="100%">
+</p>
 
-You have now successfully:
+3. Add credentials:
 
-* Cloned the **LLMOps StudyBuddy** repository onto your GCP VM
-* Configured Git identity for version control
-* Created a GitHub personal access token for secure authentication
-* Set up a GCP firewall rule allowing full outbound communication
+* Username: your GitHub username
+* Password: your GitHub personal access token
+* ID: `github-token`
 
-Your VM is now fully connected to GitHub and ready for Docker builds, Kubernetes deployment, CI/CD, and further development of the StudyBuddy system.
+<p align="center">
+  <img src="img/jenkins/new_credential.png" alt="New GitHub Credential" width="100%">
+</p>
+
+Click **Create**.
+
+## 🚀 9️⃣ Create a New Jenkins Pipeline
+
+1. From the dashboard, choose **+ New Item**
+2. Name it:
+
+```
+GITOPS PROJECT
+```
+
+3. Select **Pipeline** and click **OK**
+
+<p align="center">
+  <img src="img/jenkins/new_item.png" alt="New Pipeline Item" width="100%">
+</p>
+
+## 🧠 1️⃣0️⃣ Configure the Pipeline to Use GitHub
+
+1. Scroll to the **Pipeline** section
+2. Select **Pipeline script from SCM**
+3. Set **SCM = Git**
+4. Paste the GitHub repo URL
+5. Select credentials: `github-token`
+6. Change branch:
+
+```
+*/main
+```
+
+<p align="center">
+  <img src="img/jenkins/item_config.png" alt="SCM Config" width="100%">
+</p>
+
+Click **Apply**, then **Save**.
+
+## 🧩 1️⃣1️⃣ Generate a Jenkins Pipeline Script
+
+1. On the pipeline page, click **Pipeline Syntax**
+2. Select:
+
+```
+checkout: Check out from version control
+```
+
+3. Enter your repo URL, credentials, and branch
+4. Click **Generate Pipeline Script**
+5. Copy the generated Groovy snippet (for later in Jenkinsfile)
+
+
