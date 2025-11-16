@@ -1,122 +1,103 @@
-# ☁️ **GCP Virtual Machine Setup — LLMOps StudyBuddy**
+# ☸️ **Minikube and kubectl Setup — LLMOps StudyBuddy**
 
-In this stage, we deploy our environment to **Google Cloud Platform (GCP)** using a **Compute Engine Virtual Machine (VM)** and install the **Docker Engine**.
-This setup provides a reliable cloud-based environment for building, testing, and running the **LLMOps StudyBuddy** system inside containers.
+In this stage, we install and configure **Minikube** and **kubectl** on our **Google Cloud Platform (GCP) Virtual Machine**.
+These tools allow us to create and manage a **local Kubernetes cluster** within the VM, which will later be used to deploy and orchestrate the **LLMOps StudyBuddy** application.
 
-## 🧭 **Step 1 — Launch a GCP VM**
+## 🧭 **Step 1 — Install Minikube**
 
-1. Log into or sign up for **Google Cloud Platform**:
-   [https://cloud.google.com/](https://cloud.google.com/)
-2. Search for **Compute Engine** in the GCP console and go to **VM instances**.
-3. Click **+ Create instance**.
+Go to the official Minikube documentation:
+👉 [https://minikube.sigs.k8s.io/docs/start/](https://minikube.sigs.k8s.io/docs/start/)
 
-### Machine Configuration
-
-Keep all defaults **except** for the *Machine type*.
-Change it to:
-
-```
-e2-standard-4 (4 vCPU, 2 core, 16 GB memory)
-```
-
-under the **Standard** tab.
-
-### OS and Storage
-
-Under **OS and storage**, click **Change** and select the options shown below:
-
-<p align="center">
-  <img src="img/vm_setup/change_os.png" alt="Change OS Settings in GCP" width="100%">
-</p>
-
-### Networking
-
-Under **Networking → Firewall**, enable:
-
-* Allow HTTP traffic
-* Allow HTTPS traffic
-* Allow Load Balancer Health Checks
-
-Also ensure **IP forwarding** is switched on.
-
-Click **Create** to launch the instance.
-
-When ready, click **SSH** under *Connect* to open a terminal.
-
-## ⚙️ **Step 2 — Install Docker Engine**
-
-Visit the official Docker documentation:
-[https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/)
-
-Scroll to **“Install using the apt repository”** and run the commands under **1. Set up Docker’s apt repository**:
+Select **Linux** as the operating system, then copy and paste the first installation command into your VM terminal:
 
 ```bash
-# Add Docker's official GPG key:
-sudo apt-get update
-sudo apt-get install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add Docker's repository:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-sudo apt-get update
+curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
 ```
 
-Then scroll to **2. Install the Docker packages** and run only:
+You should see output similar to:
+
+```
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100  133M  100  133M    0     0   132M      0  0:00:01  0:00:01 --:--:--  132M
+```
+
+Now install Minikube and remove the downloaded file:
 
 ```bash
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
 ```
 
-Verify installation:
+Start your Minikube cluster:
 
 ```bash
-sudo docker run hello-world
+minikube start
 ```
 
-Expected output begins with:
+Expected output:
 
 ```
-Hello from Docker!
-This message shows that your installation appears to be working correctly.
+😄  minikube v1.37.0 on Ubuntu 24.04 (amd64)
+✨  Automatically selected the docker driver. Other choices: none, ssh
+📌  Using Docker driver with root privileges
+👍  Starting "minikube" primary control-plane node in "minikube" cluster
+🚜  Pulling base image v0.0.48 ...
+💾  Downloading Kubernetes v1.34.0 preload ...
+🔥  Creating docker container (CPUs=2, Memory=3900MB) ...
+🐳  Preparing Kubernetes v1.34.0 on Docker 28.4.0 ...
+🔗  Configuring bridge CNI ...
+🔎  Verifying Kubernetes components...
+🌟  Enabled addons: storage-provisioner, default-storageclass
+💡  kubectl not found. If you need it, try: 'minikube kubectl -- get pods -A'
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 ```
 
-## 🧪 **Step 3 — Enable Docker for Your User**
+This confirms that Minikube is installed and your cluster is running.
 
-Visit:
-[https://docs.docker.com/engine/install/linux-postinstall/](https://docs.docker.com/engine/install/linux-postinstall/)
+## ⚙️ **Step 2 — Install kubectl**
 
-Run:
+Install **kubectl**, the command-line tool used to manage Kubernetes clusters.
+
+Go to:
+👉 [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+
+Scroll to **“1. Install kubectl binary with curl on Linux”** and run:
 
 ```bash
-sudo groupadd docker
-sudo usermod -aG docker $USER
-newgrp docker
-docker run hello-world
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 ```
 
-Then enable Docker on boot:
+Expected output:
+
+```
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+100   138  100   138    0     0   2486      0 --:--:-- --:--:-- --:--:--  2509
+100 57.7M  100 57.7M    0     0   115M      0 --:--:-- --:--:-- --:--:--  115M
+```
+
+Scroll further down to **“Install using other package management”**, select **Snap**, and run:
 
 ```bash
-sudo systemctl enable docker.service
-sudo systemctl enable containerd.service
+sudo snap install kubectl --classic
+kubectl version --client
 ```
 
-You should see output confirming activation.
+Expected output:
 
-## ✅ **Step 4 — Confirm Installation**
-
-Check Docker version:
-
-```bash
-docker version
+```
+kubectl 1.34.1 from Canonical✓ installed
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
 ```
 
-Typical output includes both the **Client** and **Server** sections, confirming that Docker Engine is running on your VM.
+Your **kubectl** installation is now complete and correctly configured.
 
-Your **Docker Engine** is now installed and configured on your **GCP VM**, ready to support deployment of the **LLMOps StudyBuddy** project.
+## ✅ **In Summary**
+
+You have now successfully:
+
+* Installed **Minikube** and started a Kubernetes cluster
+* Installed **kubectl** and verified the client version
+
+Your GCP VM is now fully equipped with **Docker**, **Minikube**, and **kubectl**, enabling deployment and management of the **LLMOps StudyBuddy** system in a Kubernetes environment.
