@@ -49,7 +49,7 @@ pipeline {
                         git config user.email "the_rfc@hotmail.co.uk"
                         git add manifests/deployment.yaml
                         git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/data-guru0/STUDY-BUDDY-AI.git HEAD:main
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/Ch3rry-Pi3-AI/LLMOps-Study-Buddy.git HEAD:main
                         '''
                     }
                 }
