@@ -1,128 +1,122 @@
-# 🐳 **Containerisation & Kubernetes Deployment — LLMOps StudyBuddy**
+# ☁️ **GCP Virtual Machine Setup — LLMOps StudyBuddy**
 
-This branch introduces the **Docker containerisation layer** and **Kubernetes deployment configuration** for the LLMOps StudyBuddy project.
+In this stage, we deploy our environment to **Google Cloud Platform (GCP)** using a **Compute Engine Virtual Machine (VM)** and install the **Docker Engine**.
+This setup provides a reliable cloud-based environment for building, testing, and running the **LLMOps StudyBuddy** system inside containers.
 
-With these additions, the StudyBuddy Streamlit application can now be:
+## 🧭 **Step 1 — Launch a GCP VM**
 
-* Packaged into a reproducible Docker image
-* Deployed on any Kubernetes cluster
-* Exposed externally via a NodePort service
-* Configured securely using Kubernetes Secrets
+1. Log into or sign up for **Google Cloud Platform**:
+   [https://cloud.google.com/](https://cloud.google.com/)
+2. Search for **Compute Engine** in the GCP console and go to **VM instances**.
+3. Click **+ Create instance**.
 
-This marks the beginning of StudyBuddy’s production-ready infrastructure.
+### Machine Configuration
 
-# 🐳 **Dockerfile**
+Keep all defaults **except** for the *Machine type*.
+Change it to:
 
-A new `Dockerfile` has been added at the project root.
-It defines a minimal, efficient Python 3.12 Streamlit image with:
-
-* Clean environment setup
-* System dependencies
-* Editable install of the StudyBuddy package
-* Proper port exposure (`8501`)
-* A launch command for Streamlit
-
-This enables portable, reproducible deployments of the StudyBuddy application.
-
-# ☸️ **Kubernetes Manifests**
-
-Inside the `manifests/` directory, two new files define the Kubernetes deployment workflow:
-
-* `deployment.yaml` — defines replicas, container configuration, ports, and secret-based environment variables
-* `service.yaml` — exposes the StudyBuddy app externally via NodePort
-
-Together, these manifests allow you to run StudyBuddy on Minikube, KIND, GKE, AKS, or EKS.
-
-# 🗂️ **Updated Project Structure**
-
-Only the **new files** added in this branch are annotated below:
-
-```text
-LLMOPS-STUDY-BUDDY/
-├── Dockerfile                         # 🐳 Container definition for StudyBuddy
-├── manifests/
-│   ├── deployment.yaml                # ☸️ Kubernetes Deployment for running the app
-│   └── service.yaml                   # 🌐 NodePort Service exposing Streamlit
-├── .venv/
-├── .env
-├── .gitignore
-├── .python-version
-├── app.py
-├── img/
-│   └── streamlit/
-│       ├── streamlit_app1.gif
-│       └── streamlit_app2.gif
-├── llmops_study_buddy.egg-info/
-├── pyproject.toml
-├── requirements.txt
-├── setup.py
-├── uv.lock
-└── src/
-    ├── common/
-    ├── config/
-    ├── models/
-    ├── prompts/
-    ├── llm/
-    ├── generator/
-    └── utils/
+```
+e2-standard-4 (4 vCPU, 2 core, 16 GB memory)
 ```
 
-# 🚀 **How to Build and Run the Docker Image**
+under the **Standard** tab.
 
-Build the image:
+### OS and Storage
+
+Under **OS and storage**, click **Change** and select the options shown below:
+
+<p align="center">
+  <img src="img/vm_setup/change_os.png" alt="Change OS Settings in GCP" width="100%">
+</p>
+
+### Networking
+
+Under **Networking → Firewall**, enable:
+
+* Allow HTTP traffic
+* Allow HTTPS traffic
+* Allow Load Balancer Health Checks
+
+Also ensure **IP forwarding** is switched on.
+
+Click **Create** to launch the instance.
+
+When ready, click **SSH** under *Connect* to open a terminal.
+
+## ⚙️ **Step 2 — Install Docker Engine**
+
+Visit the official Docker documentation:
+[https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/)
+
+Scroll to **“Install using the apt repository”** and run the commands under **1. Set up Docker’s apt repository**:
 
 ```bash
-docker build -t studybuddy:latest .
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add Docker's repository:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
 ```
 
-Run the container:
+Then scroll to **2. Install the Docker packages** and run only:
 
 ```bash
-docker run -p 8501:8501 studybuddy:latest
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-Then open:
-
-```
-http://localhost:8501
-```
-
-# ☸️ **How to Deploy StudyBuddy to Kubernetes**
-
-Apply both manifests:
+Verify installation:
 
 ```bash
-kubectl apply -f manifests/
+sudo docker run hello-world
 ```
 
-Check pods and services:
+Expected output begins with:
+
+```
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+```
+
+## 🧪 **Step 3 — Enable Docker for Your User**
+
+Visit:
+[https://docs.docker.com/engine/install/linux-postinstall/](https://docs.docker.com/engine/install/linux-postinstall/)
+
+Run:
 
 ```bash
-kubectl get pods
-kubectl get svc
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+docker run hello-world
 ```
 
-On Minikube, open the app:
+Then enable Docker on boot:
 
 ```bash
-minikube service llmops-service
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
 ```
 
-# 🔐 **Required Kubernetes Secret**
+You should see output confirming activation.
 
-Your Deployment expects this secret:
+## ✅ **Step 4 — Confirm Installation**
+
+Check Docker version:
 
 ```bash
-kubectl create secret generic groq-api-secret \
-  --from-literal=GROQ_API_KEY="YOUR_API_KEY_HERE"
+docker version
 ```
 
-# ✅ **In Summary**
+Typical output includes both the **Client** and **Server** sections, confirming that Docker Engine is running on your VM.
 
-This branch:
-
-* Adds a production-ready **Dockerfile**
-* Introduces complete **Kubernetes manifests**
-* Enables cluster-ready deployment of StudyBuddy
-* Provides external access through a NodePort service
-* Lays the infrastructure foundation for scaling, CI/CD, and cloud deployments
+Your **Docker Engine** is now installed and configured on your **GCP VM**, ready to support deployment of the **LLMOps StudyBuddy** project.
