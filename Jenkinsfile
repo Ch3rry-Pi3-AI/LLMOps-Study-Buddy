@@ -34,7 +34,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    sed -i 's|image: dataguru97/studybuddy:.*|image: ch3rrypi3/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+                    sed -i 's|image: ch3rrypi3/studybuddy:.*|image: ch3rrypi3/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
                     """
                 }
             }
